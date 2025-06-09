@@ -306,6 +306,7 @@ period_closing_doctypes = [
 	"Subcontracting Receipt",
 ]
 
+
 doc_events = {
 	"*": {
 		"validate": [
