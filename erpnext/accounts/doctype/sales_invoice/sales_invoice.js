@@ -21,6 +21,13 @@ erpnext.accounts.SalesInvoiceController = class SalesInvoiceController extends (
 			Dunning: this.make_dunning.bind(this),
 			"Invoice Discounting": this.make_invoice_discounting.bind(this),
 		};
+
+		// Setup billing email auto-fill for email dialog
+		erpnext.billing_email.setup(this.frm, {
+			party_type: "Customer",
+			party_field: "customer",
+			enable_template_selection: true,
+		});
 	}
 	company() {
 		super.company();
@@ -73,6 +80,9 @@ erpnext.accounts.SalesInvoiceController = class SalesInvoiceController extends (
 	refresh(doc, dt, dn) {
 		const me = this;
 		super.refresh();
+
+		// Load billing contact emails for email dialog
+		erpnext.billing_email.refresh(this.frm);
 
 		if (this.frm?.msgbox && this.frm.msgbox.$wrapper.is(":visible")) {
 			// hide new msgbox
@@ -386,6 +396,9 @@ erpnext.accounts.SalesInvoiceController = class SalesInvoiceController extends (
 				},
 			});
 		}
+
+		// Refresh billing contact emails when customer changes
+		erpnext.billing_email.refresh(this.frm);
 	}
 
 	make_inter_company_invoice() {
