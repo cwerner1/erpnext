@@ -31,6 +31,7 @@ import "./templates/crm_notes.html";
 import "./controllers/accounts.js";
 import "./utils/landed_taxes_and_charges_common.js";
 import "./utils/sales_common.js";
+import "./utils/billing_email.js";
 import "./controllers/buying.js";
 import "./utils/demo.js";
 import "./financial_statements.js";
