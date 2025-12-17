@@ -142,10 +142,21 @@ erpnext.stock.DeliveryNoteController = class DeliveryNoteController extends (
 		this.frm.make_methods = {
 			"Delivery Trip": this.make_delivery_trip,
 		};
+
+		// Setup billing email auto-fill for email dialog
+		erpnext.billing_email.setup(this.frm, {
+			party_type: "Customer",
+			party_field: "customer",
+			enable_template_selection: false, // No is_return for Delivery Note
+		});
 	}
 	refresh(doc, dt, dn) {
 		var me = this;
 		super.refresh();
+
+		// Load billing contact emails for email dialog
+		erpnext.billing_email.refresh(this.frm);
+
 		if (
 			!doc.is_return &&
 			(doc.status != "Closed" || this.frm.is_new()) &&
@@ -433,6 +444,12 @@ erpnext.stock.DeliveryNoteController = class DeliveryNoteController extends (
 				frappe.ui.form.is_saving = false;
 			},
 		});
+	}
+
+	customer() {
+		super.customer();
+		// Refresh billing contact emails when customer changes
+		erpnext.billing_email.refresh(this.frm);
 	}
 };
 

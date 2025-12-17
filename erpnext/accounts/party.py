@@ -1039,6 +1039,78 @@ def get_default_contact(doctype: str, name: str) -> str | None:
 	return contacts[0] if contacts else None
 
 
+@frappe.whitelist()
+def get_billing_contact_emails(doctype: str, name: str) -> list[str]:
+	"""
+	Get billing contact emails with fallback chain.
+
+	Returns email addresses for billing contacts linked to the party.
+	Fallback order:
+	1. All billing contacts (is_billing_contact=1) - returns ALL emails
+	2. Primary contact (is_primary_contact=1) - returns first email
+	3. Party email_id field - returns single email
+	4. Empty list
+
+	:param doctype: Party Doctype (Customer, Supplier)
+	:param name: Party name
+	:return: List of email addresses
+	"""
+	if not name or not doctype:
+		return []
+
+	# Step 1: Try all billing contacts
+	billing_emails = frappe.db.sql(
+		"""
+		SELECT DISTINCT ce.email_id
+		FROM `tabContact Email` ce
+		INNER JOIN `tabContact` c ON ce.parent = c.name
+		INNER JOIN `tabDynamic Link` dl ON dl.parent = c.name
+		WHERE dl.link_doctype = %s
+			AND dl.link_name = %s
+			AND dl.parenttype = 'Contact'
+			AND c.is_billing_contact = 1
+			AND ce.email_id IS NOT NULL
+			AND ce.email_id != ''
+		ORDER BY ce.is_primary DESC, c.creation DESC
+		""",
+		(doctype, name),
+		pluck="email_id",
+	)
+
+	if billing_emails:
+		return billing_emails
+
+	# Step 2: Fallback to primary contact
+	primary_emails = frappe.db.sql(
+		"""
+		SELECT ce.email_id
+		FROM `tabContact Email` ce
+		INNER JOIN `tabContact` c ON ce.parent = c.name
+		INNER JOIN `tabDynamic Link` dl ON dl.parent = c.name
+		WHERE dl.link_doctype = %s
+			AND dl.link_name = %s
+			AND dl.parenttype = 'Contact'
+			AND c.is_primary_contact = 1
+			AND ce.email_id IS NOT NULL
+			AND ce.email_id != ''
+		ORDER BY ce.is_primary DESC
+		LIMIT 1
+		""",
+		(doctype, name),
+		pluck="email_id",
+	)
+
+	if primary_emails:
+		return primary_emails
+
+	# Step 3: Fallback to party email_id
+	party_email = frappe.db.get_value(doctype, name, "email_id")
+	if party_email:
+		return [party_email]
+
+	return []
+
+
 def add_party_account(party_type, party, company, account):
 	doc = frappe.get_doc(party_type, party)
 	account_exists = False

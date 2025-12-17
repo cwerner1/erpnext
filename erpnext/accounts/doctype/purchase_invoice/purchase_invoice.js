@@ -42,6 +42,13 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 				},
 			};
 		});
+
+		// Setup billing email auto-fill for email dialog
+		erpnext.billing_email.setup(this.frm, {
+			party_type: "Supplier",
+			party_field: "supplier",
+			enable_template_selection: true,
+		});
 	}
 
 	onload() {
@@ -77,6 +84,9 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 	refresh(doc) {
 		const me = this;
 		super.refresh();
+
+		// Load billing contact emails for email dialog
+		erpnext.billing_email.refresh(this.frm);
 
 		hide_fields(this.frm.doc);
 		// Show / Hide button
@@ -372,6 +382,9 @@ erpnext.accounts.PurchaseInvoice = class PurchaseInvoice extends erpnext.buying.
 				}
 			}
 		);
+
+		// Refresh billing contact emails when supplier changes
+		erpnext.billing_email.refresh(this.frm);
 	}
 
 	apply_tds(frm) {
